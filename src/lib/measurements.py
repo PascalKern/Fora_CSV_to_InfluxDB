@@ -14,6 +14,7 @@ class BaseMeasurement(object):
     note: str
     unit: MeasurementUnit
     value: float
+    period: Period = Period.EMPTY
     measurement_type: str = dataclasses.field(init=False)
 
     def _items(self):
@@ -31,28 +32,52 @@ class BaseMeasurement(object):
 @dataclass(frozen=True)
 class BloodGlucose(BaseMeasurement):
     measurement_type = 'blood_glucose'
-    period: Period = Period.EMPTY
 
 
 @dataclass(frozen=True)
 class Hematocrit(BaseMeasurement):
     measurement_type = 'hematocrit'
-    period: Period = Period.EMPTY
 
 
 @dataclass(frozen=True)
 class Hemoglobin(BaseMeasurement):
     measurement_type = 'hemoglobin'
-    period: Period = Period.EMPTY
 
 
 # TODO Need's calc depending on hematocrit unit?! Think not as hematocrit is in percentage but
 #  percentage of? g/dl or mmol/L
+# TODO Maybe move into the Hematologic measurement class! Would make bellow swich simpler and not require
+#  the record to be passed in as well?!
 def _calc_hemoglobine(record):
     hematocrit_value = record.get_measurement_by_name('hematocrit_perc')
     # Calculation from Android App code: FLOOR('Hematocrit(%)' × 0.340000003576279 × 10,1) ÷ 10
     HEMOTACRIT_TO_HEMOGLOBINE = 0.340000003576279
     return math.floor(hematocrit_value * HEMOTACRIT_TO_HEMOGLOBINE * 10) / 10
+
+
+@dataclass(frozen=True)
+class Ketnone(BaseMeasurement):
+    measurement_type = 'ketone'
+
+
+@dataclass(frozen=True)
+class Chloresterol(BaseMeasurement):
+    measurement_type = 'cholesterol'
+
+
+@dataclass(frozen=True)
+class UricAcid(BaseMeasurement):
+    measurement_type = 'uric_acid'
+
+
+@dataclass(frozen=True)
+class Triglycerides(BaseMeasurement):
+    measurement_type = 'triglycerides'
+
+
+@dataclass(frozen=True)
+class Lactate(BaseMeasurement):
+    measurement_type = 'lactate'
 
 
 def _build_measurement(measurement: str, value: float, record: ForaMedicalRecord) -> List[BaseMeasurement]:
@@ -69,26 +94,16 @@ def _build_measurement(measurement: str, value: float, record: ForaMedicalRecord
                     Hematocrit(date_time=date_time, note=note, unit=meas_unit, value=value, period=period)]
         case 'blood_glucose':
             return [BloodGlucose(date_time=date_time, note=note, unit=meas_unit, value=value, period=period)]
-        case 'ketone_mmol':
-            pass
-        case 'ketone_mg_dl':
-            pass
-        case 'cholesterol_mg_dl':
-            pass
-        case 'cholesterol_mmol':
-            pass
-        case 'uric_acid_mg':
-            pass
-        case 'uric_acid_umol':
-            pass
-        case 'uric_acid_mmol':
-            pass
-        case 'triglycerides_mg_dl':
-            pass
-        case 'triglycerides_mmol':
-            pass
-        case 'lactate_mmol':
-            pass
+        case 'ketone':
+            return [Ketnone(date_time=date_time, note=note, unit=meas_unit, value=value, period=period)]
+        case 'cholesterol':
+            return [Chloresterol(date_time=date_time, note=note, unit=meas_unit, value=value, period=period)]
+        case 'uric_acid':
+            return [UricAcid(date_time=date_time, note=note, unit=meas_unit, value=value, period=period)]
+        case 'triglycerides':
+            return [Triglycerides(date_time=date_time, note=note, unit=meas_unit, value=value, period=period)]
+        case 'lactate':
+            return [Lactate(date_time=date_time, note=note, unit=meas_unit, value=value, period=period)]
         case _:
             raise ValueError(f'Unexpected measurement type: {measurement}')
     return Any
