@@ -7,7 +7,7 @@ from typing import List, Generator
 
 from dataclass_csv import DataclassReader, dateformat, accept_whitespaces
 
-from lib.constants import Period
+from lib.constants import Period, MeasurementUnit
 
 
 @dataclass(frozen=True)
@@ -35,7 +35,7 @@ class BaseForaMedicalRecord(object):
 class ForaMedicalRecord(BaseForaMedicalRecord):
     blood_glucose_mg_dl: float = 0
     blood_glucose_mmol: float = 0
-    hematocrit: float = 0
+    hematocrit_perc: float = 0
     ketone_mmol: float = 0
     ketone_mg_dl: float = 0
     hemoglobin_mmol: float = 0
@@ -58,6 +58,9 @@ class ForaMedicalRecord(BaseForaMedicalRecord):
 
     def get_note(self) -> str:
         return self.note
+
+    def get_measurement_by_name(self, name: str) -> MeasurementUnit:
+        return getattr(self, name)
 
     def __str__(self):
         res = ''
@@ -87,21 +90,20 @@ HEADER_MAPPING = {
     'Note': 'note',
     'Blood Glucose(mg/dL)': 'blood_glucose_mg_dl',
     'Blood Glucose(mmol/L)': 'blood_glucose_mmol',
-    'Hematocrit(%)': 'hematocrit',
+    'Hematocrit(%)': 'hematocrit_perc',
     'Ketone(mmol/L)': 'ketone_mmol',
     'Ketone(mg/dL)': 'ketone_mg_dl',
     'Hemoglobin(mmol/L)': 'hemoglobin_mmol',
     'Hemoglobin((g/dL))': 'hemoglobin_g_dl',
     'Cholesterol(mg/dL)': 'cholesterol_mg_dl',
     'Cholesterol(mmol/L)': 'cholesterol_mmol',
-    'Uric Acid(mg/dL)': 'uric_acid_mg',
+    'Uric Acid(mg/dL)': 'uric_acid_mg_dl',
     'Uric Acid(umol/L)': 'uric_acid_umol',
     'Uric Acid(mmol/L)': 'uric_acid_mmol',
     'Triglycerides(mg/dL)': 'triglycerides_mg_dl',
     'Triglycerides(mmol/L)': 'triglycerides_mmol',
     'Lactate(mmol/L)': 'lactate_mmol'
 }
-
 
 def read_csv(csv_file: Path) -> ForaMedicalRecords:
     """
