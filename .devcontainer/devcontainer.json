@@ -8,6 +8,8 @@
     "dockerComposeFile": "docker-compose.yaml",
     "service": "devcontainer",
 
+    // Not Supported (yet) "runArgs": ["--env-file", ".env_dev"],
+
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
