@@ -93,7 +93,7 @@ HEADER_MAPPING = {
     'Hematocrit(%)': 'hematocrit_perc',
     'Ketone(mmol/L)': 'ketone_mmol',
     'Ketone(mg/dL)': 'ketone_mg_dl',
-    'Hemoglobin(mmol/L)': 'hemoglobin_mmol',
+    'Hemoglobin((mmol/L))': 'hemoglobin_mmol',
     'Hemoglobin((g/dL))': 'hemoglobin_g_dl',
     'Cholesterol(mg/dL)': 'cholesterol_mg_dl',
     'Cholesterol(mmol/L)': 'cholesterol_mmol',

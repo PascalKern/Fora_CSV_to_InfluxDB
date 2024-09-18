@@ -1,11 +1,12 @@
 import dataclasses
 import math
+import typing
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Any
+from typing import List, Any, TypeVar, Type
 
 from lib.constants import MeasurementUnit, Period
-from lib.process_csv import ForaMedicalRecord
+from lib.process_csv import ForaMedicalRecord, ForaMedicalRecords
 
 
 @dataclass(frozen=True)
@@ -106,11 +107,18 @@ def _build_measurement(measurement: str, value: float, record: ForaMedicalRecord
             return [Lactate(date_time=date_time, note=note, unit=meas_unit, value=value, period=period)]
         case _:
             raise ValueError(f'Unexpected measurement type: {measurement}')
-    return Any
 
 
 def convert_record_to_measurement(record: ForaMedicalRecord) -> List[BaseMeasurement]:
     res: List[BaseMeasurement] = []
     for measurement, value in record.get_measurement_with_values():
         res.extend(_build_measurement(measurement, value, record))
+    return res
+
+
+def convert_records_to_measurements(records: ForaMedicalRecords) -> List[BaseMeasurement]:
+    res: List[BaseMeasurement] = []
+    for record in records:
+        for measurement, value in record.get_measurement_with_values():
+            res.extend(_build_measurement(measurement, value, record))
     return res
