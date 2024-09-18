@@ -1,0 +1,4 @@
+influxdb==5.3.2
+influxdb-client==1.45.0
+python-dotenv==1.0.1
+dataclass-csv==1.4.0
