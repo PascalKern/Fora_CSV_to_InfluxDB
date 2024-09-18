@@ -2,6 +2,14 @@ import re
 
 from enum import StrEnum, Enum
 
+HEMATOCRIT_TO_HEMOGLOBIN = 0.340000003576279
+
+class Period(StrEnum):
+    BEFORE_MEAL = 'Before Meal'
+    AFTER_MEAL = 'After Meal'
+    GENERIC = 'GEN'
+    EMPTY = ''
+
 
 class MeasurementUnit(Enum):
     MG_DL = 'mg/dl', 'mg_dl'
@@ -14,11 +22,11 @@ class MeasurementUnit(Enum):
     def __new__(cls, value, internal_property):
         obj = object.__new__(cls)
         obj._value_ = value
-        obj.internal_property = internal_property
+        obj._internal_property = internal_property
         return obj
 
     @staticmethod
-    def get_unit_for_csv_header_name(header_name):
+    def get_unit_from_csv_header(header_name):
         if re.compile(r'.*_mg_dl').match(header_name):
             return MeasurementUnit.MG_DL
         elif re.compile(r'.*_g_dl').match(header_name):
@@ -32,12 +40,5 @@ class MeasurementUnit(Enum):
         else:
             raise IndexError(f'Unrecognized header name: {header_name}')
 
-    def get_csv_header_format(self):
-        return self.internal_property
-
-
-class Period(StrEnum):
-    BEFORE_MEAL = 'Before Meal'
-    AFTER_MEAL = 'After Meal'
-    GENERIC = 'GEN'
-    EMPTY = ''
+    def get_medical_record_unit(self):
+        return self._internal_property

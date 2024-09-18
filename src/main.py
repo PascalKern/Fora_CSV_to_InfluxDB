@@ -28,7 +28,7 @@ if __name__ == '__main__':
             test = False
             break
     print(f'{"Get First Med. Rec. Measurements":-^64}')
-    print(full_records.get_record(0).get_measurement_with_values())
+    print(full_records.get_record(0).get_measurements_and_values())
     print(f'{"Created Measurements from Med. Rec.":-^64}')
     measurements = convert_record_to_measurement(full_records.get_record(0))
     print(measurements)

@@ -3,18 +3,22 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import List, Type
 
 from dataclass_csv import DataclassReader, dateformat, accept_whitespaces
 
 from lib.constants import Period, MeasurementUnit
+# Not nice but the only way to prevent the circular import at runtime! (https://stackoverflow.com/a/39757388/5230043)
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from lib.measurements import BaseMeasurement
 
 
 @dataclass(frozen=True)
 @dateformat('%Y/%m/%d %H:%M')  # 2024/07/24 14:48
 @accept_whitespaces
 class BaseForaMedicalRecord(object):
-    _field_filter = ['field_filter', 'date_time', 'period', 'note']
+    _field_filter = ['_field_filter', 'date_time', 'period', 'note'] # Exclude this field and all properties set by the base class
 
     date_time: datetime
     period: Period = dataclasses.field(default=Period.EMPTY)
@@ -49,18 +53,18 @@ class ForaMedicalRecord(BaseForaMedicalRecord):
     triglycerides_mmol: float = 0
     lactate_mmol: float = 0
 
-    def get_measurement_with_values(self) -> List[tuple[str, float]]:
+    def get_measurements_and_values(self, include_empty_values: bool = False) -> List[tuple[str, float]]:
         res = []
         for k, v in self.__class__._items(self):
-            if k not in self._field_filter and v > 0:
+            if k not in self._field_filter and (v > 0 or include_empty_values):   # Exclude all properties set by the base class
                 res.append((k, v))
         return res
 
     def get_note(self) -> str:
         return self.note
 
-    def get_measurement_by_name(self, name: str) -> MeasurementUnit:
-        return getattr(self, name)
+    def get_measurement(self, name: Type['BaseMeasurement'], unit: MeasurementUnit) -> float:
+        return getattr(self, f'{name.measurement_name}_{unit.get_medical_record_unit()}')
 
     def __str__(self):
         res = ''
