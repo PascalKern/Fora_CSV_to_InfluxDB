@@ -12,7 +12,7 @@ from lib.process_csv import ForaMedicalRecord, ForaMedicalRecords
 class BaseMeasurement(object):
     date_time: datetime                                             # InfluxDB schema: "key" aka Timeseries-PrimaryKey
     unit: MeasurementUnit                                           # InfluxDB schema: Attribute
-    value: float                                                    # InfluxDB schema: Measurement
+    value: float | str                                              # InfluxDB schema: Measurement
     period: Period = Period.EMPTY                                   # InfluxDB schema: Attribute
     measurement_name: str = dataclasses.field(init=False)           # InfluxDB schema: Name
     default_unit: MeasurementUnit = dataclasses.field(init=False)   # InfluxDB schema: synthetic [opt. Attribute]
@@ -56,7 +56,7 @@ class Ketnone(BaseMeasurement):
 
 
 @dataclass(frozen=True)
-class Chloresterol(BaseMeasurement):
+class Cholesterol(BaseMeasurement):
     measurement_name = 'cholesterol'
     default_unit = MeasurementUnit.MG_DL
 
@@ -86,9 +86,9 @@ class Note(BaseMeasurement):
 
 # TODO Need's calc depending on hematocrit unit?! Think not as hematocrit is in percentage but
 #  percentage of? g/dl or mmol/L
-# TODO Maybe move into the Hematologic measurement class! Would make bellow swich simpler and not require
+# TODO Maybe move into the Hematologic measurement class! Would make bellow switch simpler and not require
 #  the record to be passed in as well?!
-def _calc_hemoglobine(hematocrit_value: float) -> float:
+def _calc_hemoglobin(hematocrit_value: float) -> float:
     # Calculation from Android App code: FLOOR('Hematocrit(%)' × 0.340000003576279 × 10,1) ÷ 10
     return math.floor(hematocrit_value * HEMATOCRIT_TO_HEMOGLOBIN * 10) / 10
 
@@ -98,7 +98,7 @@ def _build_measurement(meas_type: str, value: float, meas_unit: MeasurementUnit,
 
     match meas_type:
         case 'hematocrit':
-            cal_value = _calc_hemoglobine(value)
+            cal_value = _calc_hemoglobin(value)
             return [Hemoglobin(date_time=date_time, unit=meas_unit, value=cal_value, period=period),
                     Hematocrit(date_time=date_time, unit=meas_unit, value=value, period=period)]
         case 'blood_glucose':
@@ -106,7 +106,7 @@ def _build_measurement(meas_type: str, value: float, meas_unit: MeasurementUnit,
         case 'ketone':
             return [Ketnone(date_time=date_time, unit=meas_unit, value=value, period=period)]
         case 'cholesterol':
-            return [Chloresterol(date_time=date_time, unit=meas_unit, value=value, period=period)]
+            return [Cholesterol(date_time=date_time, unit=meas_unit, value=value, period=period)]
         case 'uric_acid':
             return [UricAcid(date_time=date_time, unit=meas_unit, value=value, period=period)]
         case 'triglycerides':
@@ -131,6 +131,5 @@ def convert_record_to_measurement(record: ForaMedicalRecord) -> List[BaseMeasure
 def convert_records_to_measurements(records: ForaMedicalRecords) -> List[BaseMeasurement]:
     res: List[BaseMeasurement] = []
     for record in records:
-        for measurement, value in record.get_measurements_and_values():
-            res.extend(_build_measurement(measurement, value, record))
+        res.extend(convert_record_to_measurement(record))
     return res
