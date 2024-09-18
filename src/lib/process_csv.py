@@ -1,9 +1,9 @@
 import dataclasses
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import List, Generator
+from typing import List
 
 from dataclass_csv import DataclassReader, dateformat, accept_whitespaces
 
