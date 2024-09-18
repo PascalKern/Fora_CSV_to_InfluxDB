@@ -10,13 +10,13 @@ from lib.process_csv import ForaMedicalRecord, ForaMedicalRecords
 
 @dataclass(frozen=True)
 class BaseMeasurement(object):
-    date_time: datetime                 # "key" aka Timeseries-PrimaryKey
-    note: str                           #
-    unit: MeasurementUnit
-    value: float
-    period: Period = Period.EMPTY
-    measurement_name: str = dataclasses.field(init=False)
-    default_unit: MeasurementUnit = dataclasses.field(init=False)
+    date_time: datetime                                             # InfluxDB schema: "key" aka Timeseries-PrimaryKey
+    unit: MeasurementUnit                                           # InfluxDB schema: Attribute
+    value: float                                                    # InfluxDB schema: Measurement
+    period: Period = Period.EMPTY                                   # InfluxDB schema: Attribute
+    measurement_name: str = dataclasses.field(init=False)           # InfluxDB schema: Name
+    default_unit: MeasurementUnit = dataclasses.field(init=False)   # InfluxDB schema: synthetic [opt. Attribute]
+    calculated: bool = dataclasses.field(init=False, default=False) # InfluxDB schema: synthetic Attribute
 
     def _items(self):
         for cls_field in dataclasses.fields(self):
@@ -46,6 +46,7 @@ class Hematocrit(BaseMeasurement):
 class Hemoglobin(BaseMeasurement):
     measurement_name = 'hemoglobin'
     default_unit = MeasurementUnit.G_DL
+    calculated = True
 
 
 @dataclass(frozen=True)
@@ -77,6 +78,12 @@ class Lactate(BaseMeasurement):
     measurement_name = 'lactate'
     default_unit = MeasurementUnit.MMOL_L
 
+
+@dataclass(frozen=True)
+class Note(BaseMeasurement):
+    measurement_name = 'note'
+    default_unit = MeasurementUnit.STRING
+
 # TODO Need's calc depending on hematocrit unit?! Think not as hematocrit is in percentage but
 #  percentage of? g/dl or mmol/L
 # TODO Maybe move into the Hematologic measurement class! Would make bellow swich simpler and not require
@@ -88,25 +95,26 @@ def _calc_hemoglobine(hematocrit_value: float) -> float:
 def _build_measurement(meas_type: str, value: float, meas_unit: MeasurementUnit, record: ForaMedicalRecord) -> List[BaseMeasurement]:
     date_time = record.get_date_time()
     period = record.get_period()
-    note = record.get_note()
 
     match meas_type:
         case 'hematocrit':
             cal_value = _calc_hemoglobine(value)
-            return [Hemoglobin(date_time=date_time, note=note, unit=meas_unit, value=cal_value, period=period),
-                    Hematocrit(date_time=date_time, note=note, unit=meas_unit, value=value, period=period)]
+            return [Hemoglobin(date_time=date_time, unit=meas_unit, value=cal_value, period=period),
+                    Hematocrit(date_time=date_time, unit=meas_unit, value=value, period=period)]
         case 'blood_glucose':
-            return [BloodGlucose(date_time=date_time, note=note, unit=meas_unit, value=value, period=period)]
+            return [BloodGlucose(date_time=date_time, unit=meas_unit, value=value, period=period)]
         case 'ketone':
-            return [Ketnone(date_time=date_time, note=note, unit=meas_unit, value=value, period=period)]
+            return [Ketnone(date_time=date_time, unit=meas_unit, value=value, period=period)]
         case 'cholesterol':
-            return [Chloresterol(date_time=date_time, note=note, unit=meas_unit, value=value, period=period)]
+            return [Chloresterol(date_time=date_time, unit=meas_unit, value=value, period=period)]
         case 'uric_acid':
-            return [UricAcid(date_time=date_time, note=note, unit=meas_unit, value=value, period=period)]
+            return [UricAcid(date_time=date_time, unit=meas_unit, value=value, period=period)]
         case 'triglycerides':
-            return [Triglycerides(date_time=date_time, note=note, unit=meas_unit, value=value, period=period)]
+            return [Triglycerides(date_time=date_time, unit=meas_unit, value=value, period=period)]
         case 'lactate':
-            return [Lactate(date_time=date_time, note=note, unit=meas_unit, value=value, period=period)]
+            return [Lactate(date_time=date_time, unit=meas_unit, value=value, period=period)]
+        case 'note':
+            return [Note(date_time=date_time, unit=meas_unit, value=value, period=period)]
         case _:
             raise ValueError(f'Unexpected measurement type: {meas_type}')
 

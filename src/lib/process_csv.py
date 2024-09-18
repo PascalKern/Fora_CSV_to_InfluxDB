@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 @dateformat('%Y/%m/%d %H:%M')  # 2024/07/24 14:48
 @accept_whitespaces
 class BaseForaMedicalRecord(object):
-    _field_filter = ['_field_filter', 'date_time', 'period', 'note'] # Exclude this field and all properties set by the base class
+    _field_filter = ['_field_filter', 'date_time', 'period'] # Exclude this field and all properties set by the base class
 
     date_time: datetime
     period: Period = dataclasses.field(default=Period.EMPTY)
@@ -56,7 +56,7 @@ class ForaMedicalRecord(BaseForaMedicalRecord):
     def get_measurements_and_values(self, include_empty_values: bool = False) -> List[tuple[str, float]]:
         res = []
         for k, v in self.__class__._items(self):
-            if k not in self._field_filter and (v > 0 or include_empty_values):   # Exclude all properties set by the base class
+            if k not in self._field_filter and (type(v) is str or v > 0 or include_empty_values):   # Exclude all properties set by the base class
                 res.append((k, v))
         return res
 

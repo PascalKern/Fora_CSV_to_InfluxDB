@@ -4,6 +4,7 @@ from enum import StrEnum, Enum
 
 HEMATOCRIT_TO_HEMOGLOBIN = 0.340000003576279
 
+
 class Period(StrEnum):
     BEFORE_MEAL = 'Before Meal'
     AFTER_MEAL = 'After Meal'
@@ -17,6 +18,7 @@ class MeasurementUnit(Enum):
     MMOL_L = 'mmol/L', 'mmol'
     UMOL_L = 'umol/L', 'umol'
     PERCENTAGE = '%', 'perc'
+    STRING = '', 'string'
 
     # Credit: https://stackoverflow.com/a/59916706/5230043
     def __new__(cls, value, internal_property):
@@ -37,6 +39,8 @@ class MeasurementUnit(Enum):
             return MeasurementUnit.UMOL_L
         elif re.compile(r'.*_perc').match(header_name):
             return MeasurementUnit.PERCENTAGE
+        elif re.compile(r'note').match(header_name):
+            return MeasurementUnit.STRING
         else:
             raise IndexError(f'Unrecognized header name: {header_name}')
 
