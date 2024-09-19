@@ -37,16 +37,27 @@ class BloodGlucose(BaseMeasurement):
 
 
 @dataclass(frozen=True)
-class Hematocrit(BaseMeasurement):
-    measurement_name = 'hematocrit'
-    default_unit = MeasurementUnit.PERCENTAGE
-
-
-@dataclass(frozen=True)
 class Hemoglobin(BaseMeasurement):
     measurement_name = 'hemoglobin'
     default_unit = MeasurementUnit.G_DL
     calculated = True
+
+
+@dataclass(frozen=True)
+class Hematocrit(BaseMeasurement):
+    measurement_name = 'hematocrit'
+    default_unit = MeasurementUnit.PERCENTAGE
+
+    def build_hemoglobin_measurement(self, unit: MeasurementUnit = MeasurementUnit.MG_DL) -> Hemoglobin:
+        return Hemoglobin(date_time=self.date_time, unit=unit, value=self._calc_hemoglobin(unit), period=self.period)
+
+    # TODO Check if calculation still is correct and the unit handling too! Using the unit from build_hemaglobine_measurement ok?!
+    def _calc_hemoglobin(self, unit: MeasurementUnit) -> float:
+        if unit == MeasurementUnit.MG_DL:
+            # Calculation from Android App code: FLOOR('Hematocrit(%)' × 0.340000003576279 × 10,1) ÷ 10
+            return math.floor(self.value * HEMATOCRIT_TO_HEMOGLOBIN * 10) / 10
+        elif unit == MeasurementUnit.MMOL_L:
+            raise BaseException('Conversation from Hematocrit to Hemoglobin in mmol/l not yet implemented!')
 
 
 @dataclass(frozen=True)
@@ -84,13 +95,6 @@ class Note(BaseMeasurement):
     measurement_name = 'note'
     default_unit = MeasurementUnit.STRING
 
-# TODO Need's calc depending on hematocrit unit?! Think not as hematocrit is in percentage but
-#  percentage of? g/dl or mmol/L
-# TODO Maybe move into the Hematologic measurement class! Would make bellow switch simpler and not require
-#  the record to be passed in as well?!
-def _calc_hemoglobin(hematocrit_value: float) -> float:
-    # Calculation from Android App code: FLOOR('Hematocrit(%)' × 0.340000003576279 × 10,1) ÷ 10
-    return math.floor(hematocrit_value * HEMATOCRIT_TO_HEMOGLOBIN * 10) / 10
 
 def _build_measurement(meas_type: str, value: float, meas_unit: MeasurementUnit, record: ForaMedicalRecord) -> List[BaseMeasurement]:
     date_time = record.get_date_time()
@@ -98,9 +102,8 @@ def _build_measurement(meas_type: str, value: float, meas_unit: MeasurementUnit,
 
     match meas_type:
         case 'hematocrit':
-            cal_value = _calc_hemoglobin(value)
-            return [Hemoglobin(date_time=date_time, unit=meas_unit, value=cal_value, period=period),
-                    Hematocrit(date_time=date_time, unit=meas_unit, value=value, period=period)]
+            hematocrit = Hematocrit(date_time=date_time, unit=meas_unit, value=value, period=period)
+            return [hematocrit, hematocrit.build_hemoglobin_measurement()]
         case 'blood_glucose':
             return [BloodGlucose(date_time=date_time, unit=meas_unit, value=value, period=period)]
         case 'ketone':
