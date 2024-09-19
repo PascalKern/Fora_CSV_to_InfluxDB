@@ -4,16 +4,16 @@ import os
 from pathlib import Path
 
 from lib.measurements import convert_record_to_measurement
-from lib.process_csv import read_csv
+from lib.process_csv import ForaMedicalRecords
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="A tool to convert and send content to influxdb the "
-                                                 "iFora HM App exported csv ")
+                                                 "iFora HM App exported csv")
     parser.add_argument('-c', '--csv', type=Path, required=True, help='Path to the csv file')
 
     args = parser.parse_args()
 
-    full_records = read_csv(args.csv)
+    full_records = ForaMedicalRecords.from_csv_file(args.csv)
 
     print(f'{"All Medical Records":-^64}')
     print(full_records)
