@@ -9,6 +9,7 @@ from influxdb_client.domain.script_create_request import ScriptCreateRequest
 from influxdb_client.domain.script_language import ScriptLanguage
 
 import config
+from lib.measurements import BaseMeasurement
 
 
 def _creat_client_w_token() -> InfluxDBClient:
@@ -44,6 +45,23 @@ def _try_v2_lib_influxql_query(client: InfluxDBClientV2):
     scripts_api = client.invokable_scripts_api()
     script = scripts_api.create_script(script_create_request)
     print(f'Script:{os.linesep}{script}')
+
+
+# TODO Next to be implemented! Using experiments / tries in this file and create a proper class
+#  ie. InfluxClient (most likely the correct class and name!) / MeasurementToPoint[Handler] / DataPoint[Handler/Manager] / ...
+#  Maybe more classes needed for a "nice" / clean design
+def _build_datapoint_from_measurement(measurement: BaseMeasurement) -> Point:
+    raise BaseException('Not yet implemented')
+
+
+def _check_datapoint_does_not_yet_exist(datapoint: Point) -> bool:
+    raise BaseException('Not yet implemented')
+
+
+def _get_latest_datapoint_timestamp() -> datetime:
+    raise BaseException('Not yet implemented')
+
+
 
 if __name__ == '__main__':
     client = _creat_client_w_token()
